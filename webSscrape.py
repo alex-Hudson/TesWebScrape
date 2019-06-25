@@ -1,15 +1,77 @@
 import requests
 import json
 import pandas
+import csv
 
-schools_list = ['The Perse Upper School', 'Abingdon', 'The Leys', 'Kings Ely']
+
+schools_list = ['Abingdon',
+                'Abingdon Prep',
+                'Ardingly',
+                'Badminton',
+                'Ballard',
+                'Bedford',
+                'Bedford Girls’ Junior School',
+                'Bedford Girls’ School',
+                'Bedford Modern',
+                'Bedford Prep',
+                'Bloxham',
+                'Blundells',
+                'Blundells Prep',
+                'Chandlings',
+                'Dauntsey’s',
+                'Dean Close',
+                'Dean Close Prep',
+                'Exeter',
+                'Great Walstead',
+                'Guildford High',
+                'Hazlegrove',
+                'Headington',
+                'Headington Prep',
+                'Heathfield',
+                'Heritage School',
+                'Ipswich',
+                'King’s College Choir School',
+                'King’s, Bruton',
+                'King’s, Ely',
+                'Kingham Hill',
+                'Kingswood',
+                'Lanesborough',
+                'Luckley House',
+                'Magdalen College School',
+                'Monkton',
+                'Monkton Prep',
+                'Moulsford',
+                'Oakham',
+                'Oxford High',
+                'Pangbourne College',
+                'Prior’s Field',
+                'Prior Park Bath',
+                'Queen Anne’s, Caversham',
+                'Queen’s College, Taunton',
+                'Queenswood',
+                'RGS, Guildford',
+                'Sevenoaks',
+                'Shiplake',
+                'St Catherine’s, Bramley',
+                'St Faith’s',
+                'St Helen and St Katharine',
+                'St John’s on-the-Hill',
+                'St Mary’s Cambridge',
+                'Stephen Perse Sixth Form',
+                'The Leys',
+                'The Manor',
+                'The Perse',
+                'Tormead',
+                'Tudor Hall',
+                'Walthamstow Hall',
+                'Westonbirt']
 
 school = {}
 for searchString in schools_list:
     print('hello')
 
-    url = "https://www.tes.com/api/jobs/browser/search-v3"
-    querystring = {"siteCountry": "gb^", "^": "", "sort": "^", "workplaces": [
+    url = "https://www.tes.com/api/jobs/browser/search-v3?locations=United%20Kingdom%3AEngland"
+    querystring = {"siteCountry": "gb^", "workplaces": [
         "Independent^%25^20senior^", "Independent^%25^20pre-prep^"], "keywords": searchString}
 
     headers = {
@@ -26,8 +88,6 @@ for searchString in schools_list:
     response = requests.request(
         "GET", url, headers=headers, params=querystring)
 
-    print(response.text)
-
     response = requests.request(
         "GET", url, headers=headers, params=querystring)
 
@@ -42,11 +102,31 @@ for searchString in schools_list:
 
         jobTitle = job['title']
         school[schoolName][jobTitle] = {}
-        school[schoolName][jobTitle]['jobStartDate'] = job['displayJobStartDate']
-        school[schoolName][jobTitle]['applicationCloseDate'] = job['application']['displayCloseDate']
+        school[schoolName][jobTitle]['jobStartDate'] = job['displayJobStartDate'] if 'displayJobStartDate' in job.keys() else ''
+        school[schoolName][jobTitle]['applicationCloseDate'] = job['application'][
+            'displayCloseDate'] if 'displayCloseDate' in job['application'] else ''
         school[schoolName][jobTitle]['contactTerms'] = job['displayContractTerms']
         print(school)
 
 
-school_json = json.dumps(school)
-pandas.read_json(school_json).to_excel("output.xlsx")
+csvSchool = []
+for key, value in school.items():
+    item = {}
+    for job, job_info in value.items():
+        print(job)
+        print(job_info)
+        item['schoolName'] = key
+        item['jobName'] = job
+        item.update(job_info)
+        print(item)
+        csvSchool.append(item)
+
+print(csvSchool)
+fieldnames = ["schoolName", "jobName", "jobStartDate",
+              "applicationCloseDate", 'contactTerms']
+
+
+with open('output.csv', 'w', newline='') as outfile:
+    writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(csvSchool)
